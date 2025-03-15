@@ -144,20 +144,7 @@ void loop() {
   server.handleClient();                              // Needed for the webserver to handle all clients
   webSocket.loop();                                   // Update function for the webSockets 
   
-  unsigned long now = millis();                       // read out the current "time" ("millis()" gives the time in ms since the Arduino started)
-  if ((unsigned long)(now - previousMillis) > interval) { // check if "interval" ms has passed since last time the clients were updated
-    
-    String jsonString = "";                           // create a JSON string for sending data to the client
-    StaticJsonDocument<200> doc;                      // create a JSON container
-    JsonObject object = doc.to<JsonObject>();         // create a JSON Object
-    object["rand1"] = random(100);                    // write data into the JSON object -> I used "rand1" and "rand2" here, but you can use anything else
-    object["rand2"] = random(100);
-    serializeJson(doc, jsonString);                   // convert JSON object to string
-    Serial.println(jsonString);                       // print JSON string to console for debug purposes (you can comment this out)
-    webSocket.broadcastTXT(jsonString);               // send JSON string to clients
-    
-    previousMillis = now;                             // reset previousMillis
-  }
+  
 }
 
 void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {      // the parameters of this callback function are always the same -> num: id of the client who send the event, type: type of message, payload: actual data sent and length: length of payload
