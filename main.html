@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=.9, maximum-scale=1, user-scalable=no">
+    <style>
+      .slidecontainer {
+        width: 100%;
+        text-align: center;
+        margin-top: 50px;
+      }
+
+      .slider {
+        -webkit-appearance: none;
+        width: 80%;
+        height: 20px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+      .slider:hover {
+        opacity: 1;
+      }
+    
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: rgb(0, 0, 0);
+        cursor: pointer;
+      }
+
+      .vertical-slider-container {
+  align-items: center;
+  margin-top: 400px;
+  width: 5px; /* Adjust the width as needed */
+  height: 100px; /* Adjust the height as needed */
+}
+
+.vertical-slider {
+  writing-mode: bt-lr; /* IE/Edge specific property for vertical text */
+  -webkit-appearance: none;
+  width: 400px;
+  height: 20px;
+  transform: rotate(270deg);
+     background: #d3d3d3; /* Background color of the slider */
+        outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+}
+
+.vertical-slider:hover {
+      opacity: 1;
+    }
+.vertical-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+      appearance: none;
+  width: 65px; /* Adjust the width to make the slider thumb thicker */
+  height: 65px; /* Adjust the height to make the slider thumb thicker */
+  border-radius: 50%;
+  background-color: rgb(81, 81, 81); /* Background color of the slider thumb */
+  border: none; /* Remove the default border */
+
+}
+    .vertical-slider::-moz-range-thumb {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: rgb(163, 149, 149);
+      cursor: pointer;
+    }
+    </style>
+  </head>
+  <body style="background-color:white; text-align: center;">
+ 
+    <div class="slidecontainer">
+      <input type="range" min="-255" max="255" value="0" class="slider" id="throttle" oninput='SendData("throttle", value)' ontouchend='ResetSlider("throttle")'>
+    </div>
+
+    <div class="vertical-slider-container">
+        <input type="range" min="-255" max="255" value="0" class="vertical-slider" id="steering" oninput='SendData("steering", value) 'ontouchend='ResetSlider("steering")'>
+      </div>
+
+    <script>
+      var webSocketCarInputUrl = "ws://" + window.location.hostname + "/CarInput";      
+      var websocketCarInput;
+
+      function ResetSlider(sliderId) {  // po pusteni slideru ho vrati do puvodni pozice
+        var slider = document.getElementById(sliderId);
+        slider.value = 0;
+        SendData(sliderId, 0);
+      }
+      
+      function initCarInputWebSocket() {
+        websocketCarInput = new WebSocket(webSocketCarInputUrl);
+        websocketCarInput.onclose = function(event) {
+          setTimeout(initCarInputWebSocket, 2000);
+        };
+      }
+      
+      function SendData(id, value) {
+        var data = id + "," + value;
+        console.log(data)
+        websocketCarInput.send(data);
+        
+      }
+      
+      window.onload = initCarInputWebSocket;
+    </script>
+  </body>    
+</html>

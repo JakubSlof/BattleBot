@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>PAGE</title>
+    </head>
+    <body>
+        <h1>sdjhcbsdbv</h1>
+    </body>
+
+<script>
+    var Socket;
+
+    function Init (){
+        Socket = new WebSocket('ws://'+ window.location.hostname + '81');
+        Socket.onmessage = function(event) {
+            processCommand(event);
+    };
+}
+
+function SendToEsp (){
+    var data ={
+        throttle: 255,
+        steering: 120
+    };
+    Socket.send(JSON.stringify(data));
+}
+</script>
+</html>
