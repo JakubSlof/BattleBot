@@ -21,6 +21,40 @@
 #include <WebServer.h>                                // needed to create a simple webserver (make sure tools -> board is set to ESP32, otherwise you will get a "WebServer.h: No such file or directory" error)
 #include <WebSocketsServer.h>                         // needed for instant communication between client and server through Websockets
 #include <ArduinoJson.h>                              // needed for JSON encapsulation (send multiple variables with one string)
+#include <ESP32Servo.h>
+
+
+Servo Servo1; // Vytvoření objektu pro servo
+const int servo_1_pin = 12; // Pin, na který je připojeno servo
+int servo_pos;
+int servo_last_pos = 0;
+
+
+
+const int motor_1_pin_1 = 32; // piny pro motor 1
+const int motor_1_pin_2 = 33;
+const int motor_2_pin_1 = 25; // piny pro motor 2
+const int motor_2_pin_2 = 26;
+
+
+int steering;
+int speed;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // SSID and password of Wifi connection:
 const char* ssid = "BBot";
@@ -28,81 +62,101 @@ const char* password = "niganiga";
 
 // The String below "webpage" contains the complete HTML code that is sent to the client whenever someone connects to the webserver
 const char* webpage PROGMEM = R"webpage(
-  <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="cs">
 <head>
-<title>Page Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=375, height=667, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Optimalizovaná stránka</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        /* Horizontální slider */
+        .horizontal-slider-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 100px;
+        }
+        .horizontal-slider {
+            width: 40%;
+            scale: 200%;
+        }
+        /* Kontejner pro vertikální slider */
+        .vertical-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        /* Vertikální slider */
+        .vertical-slider {
+            writing-mode: bt-lr;
+            transform: rotate(270deg);
+            height: 450px;
+            scale: 200%;
+        }
+        /* Druhý horizontální slider */
+        .small-horizontal-slider {
+            width: 50%; /* Half the size of the top slider */
+            scale: 200%;
+            margin-top: 30px;
+        }
+    </style>
 </head>
-<body style='background-color: #EEEEEE;'>
+<body>
 
-<span style='color: #003366;'>
+    <!-- První horizontální slider -->
+    <div class="horizontal-slider-container">
+        <input type='range' min='-255' max='255' value='0' class='horizontal-slider' id='0' oninput='SendData(id,value)' ontouchend='ResetSlider("0")'>
+    </div>
 
-<h1>Lets generate a random number</h1>
-<p>The first random number is: <span id='rand1'>-</span></p>
-<p>The second random number is: <span id='rand2'>-</span></p>
-<p><button type='button' id='BTN_SEND_BACK'>
-Send info to ESP32
-</button></p>
+    <!-- Vertikální slider s druhým horizontálním sliderem pod ním -->
+    <div class="vertical-slider-container">
+        <input type='range' min='-255' max='255' value='0' class='vertical-slider' id='1' oninput='SendData(id,value)' ontouchend='ResetSlider("1")'>
 
-</span>
+        <input type='range' min='0' max='90' value='0' class='small-horizontal-slider' id='2' oninput='SendData(id,value)' >
+    </div>
 
+    <script>
+        var Socket;
 
-<input type='range' min='-255' max='255' value='0' class='slider' id='0' oninput='SendData(id,value)' ontouchend='ResetSlider("0")'>
+        function init() {
+            Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+        }
 
+        function SendData(id, value) {
+            var data = id + value;
+            console.log(data);
+            Socket.send(data);
+        }
 
+        function ResetSlider(id) {
+            var slider = document.getElementById(id);
+            slider.value = 0;
+            SendData(id, 0);
+        }
+
+        window.onload = function(event) {
+            init();
+        }
+    </script>
 
 </body>
-<script>
-//id 0 throttle
-
-  var Socket;
-  document.getElementById('BTN_SEND_BACK').addEventListener('click', button_send_back);
-  function init() {
-    Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
-    Socket.onmessage = function(event) {
-      processCommand(event);
-    };
-  }
-  function button_send_back() {
-    var msg = {
-	brand: 'Gibson',
-	type: 'Les Paul Studio',
-	year:  2010,
-	color: 'white'
-	};
-	Socket.send(JSON.stringify(msg));
-  }
-
-
-
-  function SendData(id,value) { //odesila data o 
-    var data = id + value;
-        console.log(data);
-        Socket.send(data);
-  }
-
-  function ResetSlider(id) {  // po pusteni slideru ho vrati do puvodni pozice
-        var slider = document.getElementById(id);
-        slider.value = 0; //vrati slider na pozici 0
-        SendData(id, 0); //odesle data 
-      }
-
-
-
-
-
-
-  function processCommand(event) {
-	var obj = JSON.parse(event.data);
-	document.getElementById('rand1').innerHTML = obj.rand1;
-	document.getElementById('rand2').innerHTML = obj.rand2;
-    console.log(obj.rand1);
-	console.log(obj.rand2);
-  }
-  window.onload = function(event) {
-    init();
-  }
-</script>
 </html>
 
 )webpage";
@@ -119,6 +173,27 @@ WebServer server(80);                                 // the server uses port 80
 WebSocketsServer webSocket = WebSocketsServer(81);    // the websocket uses port 81 (standard port for websockets
 
 void setup() {
+
+pinMode(motor_1_pin_1, OUTPUT); // right motor
+pinMode(motor_1_pin_2, OUTPUT);
+pinMode(motor_2_pin_1, OUTPUT);
+pinMode(motor_2_pin_2, OUTPUT);
+
+digitalWrite(motor_1_pin_1, LOW);
+digitalWrite(motor_1_pin_2, LOW);
+digitalWrite(motor_2_pin_1, LOW);
+digitalWrite(motor_2_pin_2, LOW);
+
+Servo1.attach(servo_1_pin); // Připojení serva k zadanému pinu
+Servo1.write(0);
+
+
+
+
+
+
+
+
   Serial.begin(115200);                               // init serial port for debugging
  
   WiFi.begin(ssid, password);                         // start WiFi interface
@@ -141,8 +216,44 @@ void setup() {
 }
 
 void loop() {
+  //
   server.handleClient();                              // Needed for the webserver to handle all clients
-  webSocket.loop();                                   // Update function for the webSockets 
+  webSocket.loop();  
+
+
+  if (servo_pos != servo_last_pos){
+    //Serial.println(servo_pos);
+    if (servo_pos >75){
+      Servo1.attach(servo_1_pin); // Připojení serva k zadanému pinu
+      Servo1.write(0);
+    }
+    if(servo_pos> 30 && servo_pos <60){
+      Servo1.attach(servo_1_pin); // Připojení serva k zadanému pinu
+      Servo1.write(45);
+    }
+    if(servo_pos <15){
+      Servo1.attach(servo_1_pin); // Připojení serva k zadanému pinu
+      Servo1.write(90);
+    }  
+    servo_last_pos = servo_pos;
+ }
+  
+  if(speed<0){
+      analogWrite(motor_1_pin_1,-speed + steering ); //going back
+      analogWrite(motor_1_pin_2,0 );
+
+      analogWrite(motor_2_pin_2,-speed - steering ); //going back
+      analogWrite(motor_2_pin_1,0 );
+  
+    }
+    else{
+      analogWrite(motor_1_pin_2,speed + steering ); // going forward
+      analogWrite(motor_1_pin_1,0 );
+
+      analogWrite(motor_2_pin_1,speed - steering ); //going forward
+      analogWrite(motor_2_pin_2,0);
+     
+    }                              // Update function for the webSockets 
   
   
 }
@@ -171,6 +282,16 @@ void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
     Serial.println(id);
     Serial.print("Cislo: ");
     Serial.println(cislo);
+
+    if(id == 2){
+      servo_pos = cislo;
+    }
+    if(id == 1){
+      steering = cislo;
+    }
+    if (id == 0){
+      speed = cislo;
+    }
       break;
   }
 }

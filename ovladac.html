@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=375, height=667, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Optimalizovaná stránka</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        /* Horizontální slider */
+        .horizontal-slider-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 100px;
+        }
+        .horizontal-slider {
+            width: 40%;
+            scale: 200%;
+        }
+        /* Kontejner pro vertikální slider a tlačítka */
+        .vertical-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        /* Vertikální slider */
+        .vertical-slider {
+            writing-mode: bt-lr;
+            transform: rotate(270deg);
+            height: 450px;
+            scale: 200%;
+        }
+        /* Tlačítka pod vertikálním sliderem */
+        .buttons-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .buttons-row button {
+            padding: 12px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .buttons-row button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Horizontální slider -->
+    <div class="horizontal-slider-container">
+        <input type='range' min='-255' max='255' value='0' class='horizontal-slider' id='0' oninput='SendData(id,value)' ontouchend='ResetSlider("0")'>
+    </div>
+
+    <!-- Vertikální slider s tlačítky pod ním -->
+    <div class="vertical-slider-container">
+        <input type='range' min='-255' max='255' value='0' class='vertical-slider' id='1' oninput='SendData(id,value)' ontouchend='ResetSlider("1")'>
+
+        <div class="buttons-row">
+            <button id='2' onclick="SendData(id,255)">Tlačítko 1</button>
+            <button id='3' onclick="SendData(id,255)">Tlačítko 2</button>
+            <button id='4' onclick="SendData(id,255)">Tlačítko 3</button>
+        </div>
+    </div>
+
+    <script>
+        var Socket;
+
+        function init() {
+            Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+        }
+
+        function SendData(id, value) {
+            var data = id + value;
+            console.log(data);
+            Socket.send(data);
+        }
+
+        function ResetSlider(id) {
+            var slider = document.getElementById(id);
+            slider.value = 0;
+            SendData(id, 0);
+        }
+
+        window.onload = function(event) {
+            init();
+        }
+    </script>
+
+</body>
+</html>
